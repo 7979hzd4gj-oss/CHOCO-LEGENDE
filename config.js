@@ -1,17 +1,17 @@
 import 'dotenv/config';
-const _prefixes = process.env.PREFIXES ? process.env.PREFIXES.split(',') : ['😈'];
+const _prefixes = process.env.PREFIXES ? process.env.PREFIXES.split(',') : ['.', '😈', '!'];
 const config = {
     // Bot Identity - CHOCO LÉGENDE V3
     botName: process.env.BOT_NAME || 'CHOCO LÉGENDE',
     botOwner: process.env.BOT_OWNER || 'CHOCO LÉGENDE',
-    ownerNumber: process.env.OWNER_NUMBER || '224000000000',
+    ownerNumber: process.env.OWNER_NUMBER || '224611257942',
     author: process.env.AUTHOR || 'CHOCO LÉGENDE 😈',
     packname: process.env.PACKNAME || 'CHOCO LÉGENDE',
     description: process.env.DESCRIPTION || 'CHOCO LÉGENDE V3 - Bot WhatsApp Démoniaque Haute Performance',
     version: '3.0.0',
     // Bot Config
     prefixes: _prefixes,
-    prefix: '😈',
+    prefix: '.',
     commandMode: process.env.COMMAND_MODE || 'public',
     timeZone: process.env.TIMEZONE || 'Africa/Conakry',
     // Links - À TOI
