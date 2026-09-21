@@ -1,5 +1,5 @@
 import 'dotenv/config';
-const _prefixes = process.env.PREFIXES ? process.env.PREFIXES.split(',') : ['.', '😈', '!'];
+const _prefixes = process.env.PREFIXES ? process.env.PREFIXES.split(',') : ['😈'];
 const config = {
     // Bot Identity - CHOCO LÉGENDE V3
     botName: process.env.BOT_NAME || 'CHOCO LÉGENDE',
@@ -11,7 +11,7 @@ const config = {
     version: '3.0.0',
     // Bot Config
     prefixes: _prefixes,
-    prefix: '.',
+    prefix: '😈',
     commandMode: process.env.COMMAND_MODE || 'public',
     timeZone: process.env.TIMEZONE || 'Africa/Conakry',
     // Links - À TOI
