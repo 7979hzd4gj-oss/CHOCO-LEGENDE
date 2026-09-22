@@ -1,47 +1,15 @@
 {
   "name": "choco-legende-v3",
   "version": "3.0.0",
-  "description": "CHOCO-LÉGENDE V3 - Bot WhatsApp le plus puissant de Conakry | Chef 224611257942",
+  "description": "CHOCO-LEGENDE V3 - Bot WhatsApp le plus puissant de Conakry",
   "type": "module",
   "main": "index.js",
-  "directories": {
-    "assets": "assets",
-    "lib": "lib",
-    "data": "data",
-    "plugins": "plugins"
-  },
   "scripts": {
     "start": "node index.js",
-    "start:optimized": "node --max-old-space-size=512 --optimize-for-size --gc-interval=100 index.js",
-    "start:fresh": "node reset-data.js && node index.js",
-    "dev": "nodemon --watch . --ext js --ignore node_modules --ignore data --ignore session --ignore temp index.js",
-    "reset-data": "node reset-data.js",
-    "reset-session": "node -e \"import('fs').then(f=>f.default.rmSync('./session',{recursive:true,force:true})).then(()=>console.log('Session cleared!'))\"",
-    "build": "echo 'No build step needed - plain JS'",
-    "lint": "eslint . --ext .js",
-    "test": "vitest run",
-    "test:unit": "vitest run test/unit",
-    "test:integration": "vitest run test/integration",
-    "test:watch": "vitest",
-    "audit": "npm audit --omit=dev"
+    "start:optimized": "node --max-old-space-size=512 index.js",
+    "dev": "nodemon index.js",
+    "reset-session": "node -e \"import('fs').then(f=>f.default.rmSync('./session',{recursive:true,force:true}))\""
   },
-  "keywords": [
-    "choco-legende",
-    "whatsapp-bot",
-    "baileys-bot",
-    "conakry-bot",
-    "guinee-bot"
-  ],
-  "homepage": "https://github.com/CHOCO-LEGENDE/V3",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/CHOCO-LEGENDE/V3.git"
-  },
-  "bugs": {
-    "url": "https://github.com/CHOCO-LEGENDE/V3/issues"
-  },
-  "license": "MIT",
-  "author": "CHOCO-LEGENDE - 224611257942",
   "dependencies": {
     "@hapi/boom": "^10.0.1",
     "@whiskeysockets/baileys": "^7.0.0-rc14",
@@ -59,4 +27,10 @@
     "gspeak": "^0.0.3",
     "human-readable": "^0.2.1",
     "libphonenumber-js": "^1.11.18",
-   
+    "moment-timezone": "^0.5.45",
+    "node-cron": "^3.0.3",
+    "pino": "^9.0.0",
+    "qrcode-terminal": "^0.12.0",
+    "sharp": "^0.33.0"
+  }
+}
