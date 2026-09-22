@@ -1,158 +1,157 @@
 import 'dotenv/config';
-import fs, { existsSync, mkdirSync, rmSync } from 'fs';
-import path, { dirname } from 'path';
-import chalk from 'chalk';
-import syntaxerror from 'syntax-error';
-import { parsePhoneNumber as PhoneNumber } from 'awesome-phonenumber';
-import readline from 'readline';
-import QRCode from 'qrcode';
+import fs from 'fs';
+import path from 'path';
 import { fileURLToPath } from 'url';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-import { smsg } from './lib/myfunc.js';
-import { compileAll } from './lib/compile.js';
-import makeWASocket, { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, Browsers, jidDecode, jidNormalizedUser, makeCacheableSignalKeyStore, delay } from '@whiskeysockets/baileys';
+import { dirname } from 'path';
+import chalk from 'chalk';
 import NodeCache from 'node-cache';
 import pino from 'pino';
+import QRCode from 'qrcode';
+import makeWASocket, { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, Browsers, jidDecode, jidNormalizedUser, makeCacheableSignalKeyStore, delay } from '@whiskeysockets/baileys';
+
 import config from './config.js';
+import { smsg } from './lib/myfunc.js';
+import { compileAll } from './lib/compile.js';
 import store from './lib/lightweight_store.js';
 import SaveCreds from './lib/session.js';
 import { server, PORT } from './lib/server.js';
 import { printLog } from './lib/print.js';
-import { writeErrorLog } from './lib/logger.js';
-import { handleMessages, handleGroupParticipantUpdate, handleStatus, handleCall } from './lib/messageHandler.js';
 import commandHandler from './lib/commandHandler.js';
+import { handleMessages, handleGroupParticipantUpdate, handleStatus, handleCall } from './lib/messageHandler.js';
 
-store.readFromFile();
-setInterval(() => store.writeToFile(), config.storeWriteInterval || 10000);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-const phoneNumber = config.pairingNumber || config.ownerNumber || "224611257942";
+// ===== CONFIG =====
+global.botname = config.botName;
+global.themeemoji = config.themeEmoji || "😈";
+const pairingCode =!process.argv.includes("--qr-code");
 
+// ===== DATA FOLDERS =====
 const DATA_DEFAULTS = {
-    'owner.json': ["224611257942"],
+    'owner.json': [config.ownerNumber],
     'banned.json': [],
     'premium.json': [],
-    'warnings.json': {},
-    'notes.json': {},
-    'autoAi.json': {},
-    'messageCount.json': { isPublic: true, messageCount: {} },
-    'userGroupData.json': { users: [], groups: [], antilink: {}, antibadword: {}, warnings: {}, sudo: [], welcome: {}, goodbye: {}, chatbot: {}, autoReaction: false },
-    'autoStatus.json': { enabled: false },
-    'autoread.json': { enabled: false },
-    'autotyping.json': { enabled: false },
-    'pmblocker.json': { enabled: false },
-    'anticall.json': { enabled: false },
-    'stealthMode.json': { enabled: false },
-    'autoBio.json': { enabled: false, customBio: null },
-    'autoReaction.json': { enabled: false },
-    'antidelete.json': { enabled: false },
-    'antilink.json': {},
-    'antibadword.json': {},
 };
 fs.mkdirSync('./data', { recursive: true });
+fs.mkdirSync('./session', { recursive: true });
 for (const [file, def] of Object.entries(DATA_DEFAULTS)) {
     const fp = `./data/${file}`;
     if (!fs.existsSync(fp)) fs.writeFileSync(fp, JSON.stringify(def, null, 2));
 }
 
-global.botname = config.botName || "CHOCO LÉGENDE 😈";
-global.themeemoji = "😈";
-const pairingCode =!process.argv.includes("--qr-code");
-const useMobile = process.argv.includes("--mobile");
-let rl = null; let rlClosed = false;
-if (process.stdin.isTTY &&!config.pairingNumber) {
-    rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    rl.on('close', () => { rlClosed = true; });
-}
-const question = (text) => {
-    if (rl &&!rlClosed) { return new Promise((resolve) => rl.question(text, resolve)); }
-    else { return Promise.resolve(config.ownerNumber || phoneNumber); }
-};
+// ===== STORE =====
+store.readFromFile();
+setInterval(() => store.writeToFile(), 10000);
 
-function ensureSessionDirectory() {
-    const sessionPath = path.join(__dirname, 'session');
-    if (!existsSync(sessionPath)) { mkdirSync(sessionPath, { recursive: true }); }
-    return sessionPath;
-}
+// ===== SESSION =====
 function hasValidSession() {
     try {
-        const credsPath = path.join(__dirname, 'session', 'creds.json');
-        if (!existsSync(credsPath)) return false;
-        const fileContent = fs.readFileSync(credsPath, 'utf8');
-        if (!fileContent || fileContent.trim().length === 0) return false;
-        const creds = JSON.parse(fileContent);
-        if (!creds.noiseKey ||!creds.signedIdentityKey ||!creds.signedPreKey) return false;
-        if (creds.registered === false) { try { rmSync(path.join(__dirname, 'session'), { recursive: true, force: true }); } catch (_e) {} return false; }
-        printLog('success', 'Valid session CHOCO LEGENDE found 😈');
-        return true;
-    } catch (error) { return false; }
+        const creds = JSON.parse(fs.readFileSync('./session/creds.json', 'utf8'));
+        return!!creds.noiseKey && creds.registered!== false;
+    } catch { return false; }
 }
-async function initializeSession() {
-    ensureSessionDirectory();
-    const txt = config.sessionId;
-    if (!txt) { if (hasValidSession()) return true; return false; }
+
+async function initSession() {
     if (hasValidSession()) return true;
-    try { await SaveCreds(txt); await delay(2000); return hasValidSession(); } catch (error) { return false; }
-}
-
-server.listen(PORT, () => { printLog('success', `CHOCO LEGENDE Server on port ${PORT} 😈`); });
-
-async function startChocoLegende() {
+    if (!config.sessionId) return false;
     try {
-        const { version } = await fetchLatestBaileysVersion();
-        ensureSessionDirectory(); await delay(1000);
-        const { state, saveCreds } = await useMultiFileAuthState(`./session`);
-        const _saveCreds = async () => { ensureSessionDirectory(); await saveCreds(); };
-        const msgRetryCounterCache = new NodeCache();
-        const QasimDev = makeWASocket({
-            version, logger: pino({ level: 'silent' }), browser: Browsers.macOS('Chrome'),
-            auth: { creds: state.creds, keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" }).child({ level: "fatal" })) },
-            markOnlineOnConnect: true, generateHighQualityLinkPreview: true, syncFullHistory: false,
-            getMessage: async (key) => { const jid = jidNormalizedUser(key.remoteJid); const msg = await store.loadMessage(jid, key.id); return msg?.message || ""; },
-            msgRetryCounterCache, defaultQueryTimeoutMs: 60000, connectTimeoutMs: 60000, keepAliveIntervalMs: 10000,
-        });
-        QasimDev.store = store;
-        QasimDev.ev.on('creds.update', _saveCreds); store.bind(QasimDev.ev);
-        QasimDev.ev.on('messages.upsert', async (chatUpdate) => {
-            try {
-                const mek = chatUpdate.messages[0]; if (!mek.message) return;
-                mek.message = (Object.keys(mek.message)[0] === 'ephemeralMessage')? mek.message.ephemeralMessage.message : mek.message;
-                if (mek.key && mek.key.remoteJid === 'status@broadcast') { await handleStatus(QasimDev, chatUpdate); return; }
-                if (mek.key.id.startsWith('BAE5') && mek.key.id.length === 16) return;
-                await handleMessages(QasimDev, chatUpdate);
-            } catch (err) { printLog('error', `Error: ${err.message}`); }
-        });
-        QasimDev.decodeJid = (jid) => { if (!jid) return jid; if (/:\d+@/gi.test(jid)) { const decode = jidDecode(jid) || {}; return decode.user && decode.server && `${decode.user }@${ decode.server}` || jid; } else return jid; };
-        QasimDev.getName = (jid) => { const id = QasimDev.decodeJid(jid); return PhoneNumber(`+${ jid.replace('@s.whatsapp.net', '')}`).number?.international || id; };
-        QasimDev.public = true; QasimDev.serializeM = (m) => smsg(QasimDev, m, store);
-        const isRegistered = state.creds?.registered === true;
-        if (pairingCode &&!isRegistered) {
-            let phoneNumberInput = config.pairingNumber || "224611257942";
-            phoneNumberInput = phoneNumberInput.replace(/[^0-9]/g, '');
-            setTimeout(async () => {
-                try { let code = await QasimDev.requestPairingCode(phoneNumberInput); code = code?.match(/.{1,4}/g)?.join("-") || code; console.log(chalk.bgGreen.black(`TON CODE PAIRING CHOCO: ${code} 😈`)); } catch(e){ printLog('error', e.message); }
-            }, 3000);
+        await SaveCreds(config.sessionId);
+        await delay(2000);
+        return hasValidSession();
+    } catch { return false; }
+}
+
+// ===== SERVER =====
+server.listen(PORT, () => printLog('success', `Serveur CHOCO sur ${PORT} 😈`));
+
+// ===== BOT START =====
+async function startBot() {
+    const { version } = await fetchLatestBaileysVersion();
+    const { state, saveCreds } = await useMultiFileAuthState('./session');
+
+    const sock = makeWASocket({
+        version,
+        logger: pino({ level: 'silent' }),
+        browser: Browsers.macOS('Chrome'),
+        auth: {
+            creds: state.creds,
+            keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'fatal' }).child({ level: 'fatal' }))
+        },
+        markOnlineOnConnect: true,
+        getMessage: async (key) => {
+            const msg = await store.loadMessage(jidNormalizedUser(key.remoteJid), key.id);
+            return msg?.message || "";
+        },
+        msgRetryCounterCache: new NodeCache(),
+    });
+
+    sock.store = store;
+    sock.ev.on('creds.update', saveCreds);
+    store.bind(sock.ev);
+
+    // Messages
+    sock.ev.on('messages.upsert', async (chatUpdate) => {
+        const mek = chatUpdate.messages[0];
+        if (!mek?.message) return;
+        mek.message = mek.message.ephemeralMessage?.message || mek.message;
+        if (mek.key.remoteJid === 'status@broadcast') return handleStatus(sock, chatUpdate);
+        if (mek.key.id.startsWith('BAE5') && mek.key.id.length === 16) return;
+        await handleMessages(sock, chatUpdate);
+    });
+
+    sock.decodeJid = (jid) => {
+        if (!jid) return jid;
+        if (/:\d+@/gi.test(jid)) {
+            const d = jidDecode(jid) || {};
+            return d.user && d.server? `${d.user}@${d.server}` : jid;
         }
-        QasimDev.ev.on('connection.update', async (s) => {
-            const { connection, lastDisconnect, qr } = s;
-            if (qr &&!pairingCode) { try { console.log(await QRCode.toString(qr, { type: 'terminal', small: true })); } catch (_e) { console.log('QR:', qr); } }
-            if (connection === "open") {
-                printLog('success', 'CHOCO LÉGENDE CONNECTÉ 😈!');
-                printLog('info', `Bot: ${config.botName}`); printLog('info', `Owner: ${config.ownerNumber}`); printLog('info', `Prefix: ${config.prefix}`);
-                try { await QasimDev.sendMessage(`${config.ownerNumber}@s.whatsapp.net`, { text: `*${config.botName} V3 😈 EN LIGNE!*\n\n👑 Owner: ${config.ownerNumber}\n😈 Préfixe: ${config.prefix}\n\nTape *${config.prefix}menu* pour commencer!` }); } catch(e){}
-            }
-            if (connection === 'close') {
-                const statusCode = lastDisconnect?.error?.output?.statusCode;
-                if (statusCode!== DisconnectReason.loggedOut) { await delay(5000); startChocoLegende(); }
-            }
-        });
-        QasimDev.ev.on('call', async (calls) => { await handleCall(QasimDev, calls); });
-        QasimDev.ev.on('group-participants.update', async (update) => { await handleGroupParticipantUpdate(QasimDev, update); });
-        return QasimDev;
-    } catch (error) { printLog('error', error.message); await delay(5000); startChocoLegende(); }
+        return jid;
+    };
+
+    sock.public = true;
+    sock.serializeM = (m) => smsg(sock, m, store);
+
+    // Pairing
+    if (pairingCode &&!state.creds.registered) {
+        setTimeout(async () => {
+            const num = (config.pairingNumber || config.ownerNumber).replace(/[^0-9]/g, '');
+            try {
+                let code = await sock.requestPairingCode(num);
+                code = code?.match(/.{1,4}/g)?.join("-") || code;
+                console.log(chalk.bgGreen.black(`\n CODE PAIRING: ${code} 😈 \n`));
+            } catch (e) { printLog('error', e.message); }
+        }, 3000);
+    }
+
+    // Connection
+    sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
+        if (qr &&!pairingCode) console.log(await QRCode.toString(qr, { type: 'terminal', small: true }));
+
+        if (connection === "open") {
+            const total = commandHandler.commands?.size || 0;
+            printLog('success', `CHOCO V3 CONNECTÉ! ${total} COMMANDES 😈`);
+            printLog('info', `Bot: ${config.botName} | Owner: ${config.ownerNumber} | Prefix: ${config.prefix}`);
+        }
+
+        if (connection === "close" && lastDisconnect?.error?.output?.statusCode!== DisconnectReason.loggedOut) {
+            await delay(5000);
+            startBot();
+        }
+    });
+
+    sock.ev.on('call', (c) => handleCall(sock, c));
+    sock.ev.on('group-participants.update', (u) => handleGroupParticipantUpdate(sock, u));
 }
+
 async function main() {
-    await compileAll(); await commandHandler.loadCommands();
-    printLog('info', 'Démarrage CHOCO LÉGENDE V3 😈...'); await initializeSession(); await delay(3000); startChocoLegende();
+    await compileAll();
+    const count = await commandHandler.loadCommands();
+    printLog('info', `✅ ${count} plugins chargés depuis /plugins`);
+    printLog('info', `Démarrage ${config.botName}...`);
+    await initSession();
+    await delay(2000);
+    startBot();
 }
+
 main();
