@@ -11,7 +11,7 @@ const config = {
   description: process.env.DESCRIPTION || 'CHOCO-LÉGENDE V3',
   version: '3.0.0',
   prefixes: _prefixes,
-  prefix: '😈',
+  prefix: '🍫',
   commandMode: process.env.COMMAND_MODE || 'public',
   timeZone: process.env.TIMEZONE || 'Africa/Conakry',
   channelLink: process.env.CHANNEL_LINK || '',
