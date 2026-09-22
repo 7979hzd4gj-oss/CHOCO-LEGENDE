@@ -1,4 +1,4 @@
-export default {
+export default 
   name: "menu",
   alias: ["vv1","vv2","antistatut","antimarabou","responder","on","off","add"],
   desc: "Menu 300 tout en 1",
