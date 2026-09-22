@@ -24,7 +24,9 @@ const config = {
   tempCleanupInterval: Number(process.env.TEMP_CLEAN) || 3600000,
   storeWriteInterval: Number(process.env.STORE_WRITE) || 10000,
   giphyApiKey: process.env.GIPHY_API_KEY || '',
-  removeBgKey: process.env.REMOVEBG_KEY || ''
+  removeBgKey: process.env.REMOVEBG_KEY || '',
+  botImage: 'https://i.imgur.com/ton-image.jpg',
+  menuImage: 'https://i.imgur.com/ton-image.jpg'
 };
 
 export default config;
