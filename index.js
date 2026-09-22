@@ -22,29 +22,25 @@ import { handleMessages, handleGroupParticipantUpdate, handleStatus, handleCall 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// ===== CONFIG =====
 global.botname = config.botName;
-global.themeemoji = config.themeEmoji || "😈";
+global.themeemoji = "🍫";
 const pairingCode =!process.argv.includes("--qr-code");
 
-// ===== DATA FOLDERS =====
 const DATA_DEFAULTS = {
     'owner.json': [config.ownerNumber],
     'banned.json': [],
     'premium.json': [],
 };
 fs.mkdirSync('./data', { recursive: true });
-fs.mkdirSync('./session', { recursive: true });
+// On ne crée PAS session ici, on le laisse faire par Baileys
 for (const [file, def] of Object.entries(DATA_DEFAULTS)) {
     const fp = `./data/${file}`;
     if (!fs.existsSync(fp)) fs.writeFileSync(fp, JSON.stringify(def, null, 2));
 }
 
-// ===== STORE =====
 store.readFromFile();
 setInterval(() => store.writeToFile(), 10000);
 
-// ===== SESSION =====
 function hasValidSession() {
     try {
         const creds = JSON.parse(fs.readFileSync('./session/creds.json', 'utf8'));
@@ -62,10 +58,8 @@ async function initSession() {
     } catch { return false; }
 }
 
-// ===== SERVER =====
-server.listen(PORT, () => printLog('success', `Serveur CHOCO sur ${PORT} 😈`));
+server.listen(PORT, () => printLog('success', `Serveur CHOCO 🍫 sur ${PORT}`));
 
-// ===== BOT START =====
 async function startBot() {
     const { version } = await fetchLatestBaileysVersion();
     const { state, saveCreds } = await useMultiFileAuthState('./session');
@@ -90,7 +84,6 @@ async function startBot() {
     sock.ev.on('creds.update', saveCreds);
     store.bind(sock.ev);
 
-    // Messages
     sock.ev.on('messages.upsert', async (chatUpdate) => {
         const mek = chatUpdate.messages[0];
         if (!mek?.message) return;
@@ -112,26 +105,25 @@ async function startBot() {
     sock.public = true;
     sock.serializeM = (m) => smsg(sock, m, store);
 
-    // Pairing
     if (pairingCode &&!state.creds.registered) {
         setTimeout(async () => {
             const num = (config.pairingNumber || config.ownerNumber).replace(/[^0-9]/g, '');
             try {
                 let code = await sock.requestPairingCode(num);
                 code = code?.match(/.{1,4}/g)?.join("-") || code;
-                console.log(chalk.bgGreen.black(`\n CODE PAIRING: ${code} 😈 \n`));
+                console.log(chalk.bgGreen.black(`\n CODE PAIRING POUR ${num}: ${code} 🍫 \n`));
+                console.log(chalk.yellow(`Tape ce code en MOINS de 20 secondes!`));
             } catch (e) { printLog('error', e.message); }
         }, 3000);
     }
 
-    // Connection
     sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
         if (qr &&!pairingCode) console.log(await QRCode.toString(qr, { type: 'terminal', small: true }));
 
         if (connection === "open") {
             const total = commandHandler.commands?.size || 0;
-            printLog('success', `CHOCO V3 CONNECTÉ! ${total} COMMANDES 😈`);
-            printLog('info', `Bot: ${config.botName} | Owner: ${config.ownerNumber} | Prefix: ${config.prefix}`);
+            printLog('success', `CHOCO V3 CONNECTÉ! ${total} COMMANDES 🍫`);
+            printLog('info', `Bot: ${config.botName} | Owner: ${config.ownerNumber} | Prefix: ${config.prefix} ${config.prefixes.join(',')}`);
         }
 
         if (connection === "close" && lastDisconnect?.error?.output?.statusCode!== DisconnectReason.loggedOut) {
@@ -147,8 +139,8 @@ async function startBot() {
 async function main() {
     await compileAll();
     const count = await commandHandler.loadCommands();
-    printLog('info', `✅ ${count} plugins chargés depuis /plugins`);
-    printLog('info', `Démarrage ${config.botName}...`);
+    printLog('info', `✅ ${count} plugins chargés`);
+    printLog('info', `Démarrage ${config.botName} avec préfixe 🍫...`);
     await initSession();
     await delay(2000);
     startBot();
