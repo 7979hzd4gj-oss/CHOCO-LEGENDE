@@ -1,90 +1,43 @@
 export default {
-  name: "menu",
-  alias: ["vv1","vv2","antistatut","antimarabou","responder","on","off","add"],
-  desc: "Menu 300 tout en 1",
-  category: "all",
+name: "menu",
+alias: ["allmenu","help"],
+desc: "Menu 300",
+category: "GENERAL",
+async execute(sock, m, args, config) {
+const up = process.uptime();
+const h = Math.floor(up/3600);
+const mn = Math.floor((up%3600)/60);
+const txt = `
+╔═〔 😈𝗖𝗛𝗢𝗖𝗢-𝗟𝗘𝗚𝗘𝗡𝗗𝗘-𝗩3 〕═❒
+║ 🇬🇳 300 COMMANDES CHOCO 🇬🇳
+║ Owner: 224611257942 | ${h}h ${mn}m
+╚══════════════════❒
 
-  async execute(sock, m, args, config) {
-    try {
-      const body = (m.message?.conversation || m.message?.extendedTextMessage?.text || "");
-      const prefix = config?.prefix || ".";
-      const cmd = body.slice(prefix.length).trim().split(/ +/)[0].toLowerCase();
-      const txt = body.slice(prefix.length).trim().split(/ +/).slice(1).join(" ");
-      const jid = m.key.remoteJid;
-
-      if (!global.db) global.db = {};
-      if (!global.db.antistatut) global.db.antistatut = {};
-      if (!global.db.antimarabou) global.db.antimarabou = {};
-      if (!global.db.responder) global.db.responder = {};
-
-      // VV1 - Vue unique 1
-      if(cmd === "vv1"){
-        const quoted = m.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-        if(!quoted) return await sock.sendMessage(jid, {text:"❌ Réponds à une vue unique!"}, {quoted: m});
-        const view = quoted.viewOnceMessageV2?.message || quoted.viewOnceMessage?.message;
-        if(!view) return await sock.sendMessage(jid, {text:"❌ Pas une vue unique"}, {quoted: m});
-        const type = Object.keys(view)[0];
-        const buffer = await sock.downloadMediaMessage({message: view});
-        const sendType = type.replace("Message","").toLowerCase();
-        return await sock.sendMessage(jid, {[sendType]: buffer, caption: "✅ VV1 by CHOCO V3 😈"}, {quoted: m});
-      }
-
-      // VV2
-      if(cmd === "vv2"){
-        const quoted = m.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-        if(!quoted) return await sock.sendMessage(jid, {text:"❌ Réponds à vv2!"}, {quoted: m});
-        const view = quoted.viewOnceMessageV2Extension?.message;
-        if(!view) return await sock.sendMessage(jid, {text:"❌ Pas vv2"}, {quoted: m});
-        const type = Object.keys(view)[0];
-        const buffer = await sock.downloadMediaMessage({message: view});
-        const sendType = type.replace("Message","").toLowerCase();
-        return await sock.sendMessage(jid, {[sendType]: buffer, caption: "✅ VV2 by CHOCO V3 😈"}, {quoted: m});
-      }
-
-      if(cmd === "antistatut"){
-        if(txt === "on"){ global.db.antistatut[jid]=true; return await sock.sendMessage(jid, {text:"✅ AntiStatut ON 😈"}, {quoted:m}); }
-        else { delete global.db.antistatut[jid]; return await sock.sendMessage(jid, {text:"❌ AntiStatut OFF"}, {quoted:m}); }
-      }
-
-      if(cmd === "antimarabou"){
-        if(txt === "on"){ global.db.antimarabou[jid]=true; return await sock.sendMessage(jid, {text:"✅ AntiMarabou ON 😈"}, {quoted:m}); }
-        else { delete global.db.antimarabou[jid]; return await sock.sendMessage(jid, {text:"❌ AntiMarabou OFF"}, {quoted:m}); }
-      }
-
-      if(cmd === "responder"){
-        global.db.responder[jid]=txt;
-        return await sock.sendMessage(jid, {text:"✅ Auto Responder: "+txt}, {quoted:m});
-      }
-
-      if(cmd === "on"){
-        global.db.active=true;
-        return await sock.sendMessage(jid, {text:"✅ CHOCO-LÉGENDE V3 ACTIF 😈🔥"}, {quoted:m});
-      }
-
-      if(cmd === "off"){
-        global.db.active=false;
-        return await sock.sendMessage(jid, {text:"❌ Bot OFF"}, {quoted:m});
-      }
-
-      if(cmd === "add"){
-        if(!txt) return await sock.sendMessage(jid, {text:"Ex:.add 224611257942"}, {quoted:m});
-        const num=txt.replace(/[^0-9]/g,"")+"@s.whatsapp.net";
-        try{
-          await sock.groupParticipantsUpdate(jid, [num], "add");
-          return await sock.sendMessage(jid, {text:"✅ Ajouté"}, {quoted:m});
-        } catch(e){
-          return await sock.sendMessage(jid, {text:"❌ Erreur: Bot pas admin"}, {quoted:m});
-        }
-      }
-
-      // MENU PRINCIPAL
-      const up=process.uptime();
-      const h=Math.floor(up/3600), mn=Math.floor((up%3600)/60);
-      return await sock.sendMessage(jid, {text:`*😈 CHOCO-LÉGENDE V3 😈*\n\n⏰ Uptime: ${h}h ${mn}m\n👑 Owner: 224611257942\n\n*COMMANDES:*\n.vv1 (réponds à vue unique)\n.vv2\n.antistatut on/off\n.antimarabou on/off\n.responder [text]\n.on /.off\n.add [num]\n\n🔥 300 commandes actives!`}, {quoted:m});
-
-    } catch(e) {
-      console.log("Erreur menu:", e.message);
-      await sock.sendMessage(m.key.remoteJid, {text: "❌ Erreur: "+e.message}, {quoted: m});
-    }
-  }
+╔══ GENERAL (35) ══
+║ .menu .vv1 .vv2 .ping .alive .uptime
+║ .owner .joke .quote .fact .weather .news
+║ .attp .lyrics .8ball .groupinfo .staff .trt
+║ .ss .gjid .url .test .info .contact .loi
+║ .clan .id .linkwa .git .github .sc .repo
+╚══════════════════❒
+╔══ ADMIN (40) ══
+║ .open .close .ban .kick .warn .promote
+║ .demote .mute .unmute .delete .clear .tagall
+║ .tag .hidetag .add .remove .setgname .setgpp
+║ .kickall .purge .approve .invite .grouplink
+║ .revoke .totalmembers .sanction .signal
+║ .autorecording .antidemote .gstatus .link
+║ .welcome .goodbye .setwelcome .setgoodbye
+╚══════════════════❒
+╔══ PROTECTION (30) ⭐
+║ .antilink .antibadword .antibot .antileave
+║ .antimention .antisticker .antitag .anticall
+║ .antidelete .antipurge .antimarabou
+║ .antistatut .antifake .antispam .antiviewonce
+║ .antigroup .antivoice .antifile .antishare
+╚══════════════════❒
+😈 300 CMDS - CHOCO 224611257942 - V3 PRO 😈
+`;
+await sock.sendMessage(m.key.remoteJid, {text: txt});
+}
 }
