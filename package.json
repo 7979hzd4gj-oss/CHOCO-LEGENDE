@@ -28,6 +28,7 @@
     "human-readable": "^0.2.1",
     "libphonenumber-js": "^1.11.18",
     "moment-timezone": "^0.5.45",
+    "node-cache": "^5.1.2",
     "node-cron": "^3.0.3",
     "pino": "^9.0.0",
     "qrcode-terminal": "^0.12.0",
