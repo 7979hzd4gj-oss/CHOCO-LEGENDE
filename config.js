@@ -1,5 +1,5 @@
 export default {
-  botName: "CHOCO-LEGENDE-V3",
+  botName: "CHOCO-LEGENDE",
   ownerName: "CHOCO",
   ownerNumber: ["224611257942"],
   prefix: "🍫",
