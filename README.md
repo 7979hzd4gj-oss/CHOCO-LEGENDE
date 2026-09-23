@@ -1,10 +1,7 @@
-Ok chef je garde tes mots exacts mais en version JOLIE 🔥
-
-Copie-colle ça dans `README.md`:
 
 <div align="center">
 
-# 🍫 CHOCO-LEGENDE-V3 🇬🇳
+# 🍫 CHOCO-LEGENDE🇬🇳
 ### Full Command Project
 
 <img src="https://img.shields.io/badge/Baileys-WhatsApp-25D366?style=for-the-badge&logo=whatsapp">
@@ -15,7 +12,6 @@ Copie-colle ça dans `README.md`:
 
 </div>
 
----
 
 ## 🚀 Installation
 ```bash
@@ -48,5 +44,3 @@ npm start
 *224611257942*
 
 ⭐ Star le repo si tu kiffes
-
-Tu veux que je change `.antilink` en `🍫antilink` dedans ou tu laisses `.` ?
