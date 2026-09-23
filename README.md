@@ -1,6 +1,3 @@
-<div align="center">
-
-<img src="./logo.jpg" width="400">
 
 # 🍫 CHOCO LÉGENDE 👑
 ## Le Dieu des Bots WhatsApp 🇬🇳
