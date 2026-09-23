@@ -5,4 +5,4 @@ export default {
   prefix: "🍫",
   country: "🇬🇳",
   version: "1.0.0"
-};
+}; 
